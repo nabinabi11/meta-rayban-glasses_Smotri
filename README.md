@@ -1,6 +1,6 @@
 # Smotri — an open-source voice AI agent for Ray-Ban Meta glasses
 
-*Say "Hey look", ask anything. The agent answers in your ear, in your language, and sees through the glasses' camera when it needs to. (Smotri is Russian for "look!")*
+*Say "Smotri" (Russian for "look!", pronounced SMOH-tree), ask anything. The agent answers in your ear, in your language, and sees through the glasses' camera when it needs to.*
 
 > 🎥 **Demo video:** _coming soon_
 
@@ -10,7 +10,7 @@ phone handles the wake word and audio. The server does listening → thinking (+
 
 ```
 RAY-BAN META                 ANDROID PHONE (this app)                  YOUR SERVER (Docker)
-mic + speaker ──BT audio──►  wake word "Hey look" (offline, Vosk) ─WS─►  speech-to-text
+mic + speaker ──BT audio──►  wake word "Smotri" (offline, Vosk)   ─WS─►  speech-to-text
 camera ────────DAT SDK────►  VAD · pre-roll buffer · player             LLM brain + tools
                              location                                   text-to-speech
 ```
@@ -66,7 +66,7 @@ Copy it. That's all for the server. (Open port `8000/tcp` in your cloud firewall
 ### 2. App: install the APK
 
 1. Download **`smotri.apk`** from [**Releases**](../../releases/latest) on your phone and install it
-   (allow "install unknown apps" when asked). `smotri-ru.apk` is the same app with a Russian wake word («Смотри»).
+   (allow "install unknown apps" when asked). `smotri-ru.apk` is the same app tuned for a Russian accent.
 2. Open it → paste the connection line → **Save**.
 
 ### 3. Glasses: enable Developer Mode (one time)
@@ -77,7 +77,8 @@ Third-party camera access on Ray-Ban Meta currently goes through Meta's
 1. **Meta AI** app → Settings → App info → tap the **version number 5 times** → turn on **Developer Mode**.
 2. Back in Smotri: **Connect glasses** → confirm in Meta AI → **Start agent** → grant
    microphone, Bluetooth, camera and location.
-3. Say **"Hey look"** and ask something. Try *"Hey look, what am I looking at?"*
+3. Say **"Smotri"** and ask something. Try *"Smotri, what am I looking at?"* Start the phrase with it:
+   the wake word only counts at the beginning, so "give me a summary" mid-sentence won't wake it.
 
 > ⚠️ If the camera behaves strangely, check that three versions match: the SDK in the app, the
 > Meta AI app, and the DAT component on the glasses (Meta AI → App Connections). A mismatch looks
@@ -88,9 +89,11 @@ Third-party camera access on Ray-Ban Meta currently goes through Meta's
 ## Status and honest limits
 
 - **Languages**: the agent understands and answers in any language Qwen supports. The wake word
-  ships in English ("Hey look") and Russian («Смотри»). Other languages need a
+  "Smotri" ships for English and Russian accents (two APKs). Other accents need a
   [Vosk model](https://alphacephei.com/vosk/models) and one line in `android/app/build.gradle.kts`.
   Voice output is tuned for English and Russian; set `QWEN_TTS_LANGUAGE` for others.
+- **The wake word was tuned offline on synthetic voices** (details in [How it works](docs/HOW-IT-WORKS.md#wake-word)).
+  Real voices and accents may need more aliases; issues with "it didn't wake" logs are very welcome.
 - **Android only.** There is no iOS client.
 - **The camera is the bottleneck**: the glasses' camera takes **6–14 s** to deliver the first frame
   through the SDK. This is outside our control. Details and measurements are in [How it works](docs/HOW-IT-WORKS.md).
@@ -114,8 +117,8 @@ echo "github_token=ghp_your_read_packages_PAT" > local.properties   # Meta's SDK
 
 You need JDK 17 and the Android SDK 36. For the wake word, put
 [`vosk-model-small-en-us-0.15`](https://alphacephei.com/vosk/models) into
-`app/src/main/assets/vosk-model-en/` (Russian: `vosk-model-small-ru-0.22` → `vosk-model-ru/`, build
-with `-Psmotri.wake=ru`). CI does this automatically, see [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml).
+`app/src/main/assets/vosk-model-en/` (Russian accent: `vosk-model-small-ru-0.22` → `vosk-model-ru/`,
+build with `-Psmotri.wake=ru`). CI does this automatically, see [`.github/workflows/release-apk.yml`](.github/workflows/release-apk.yml).
 
 ## Licenses and credits
 

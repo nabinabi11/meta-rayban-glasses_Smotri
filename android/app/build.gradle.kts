@@ -35,13 +35,15 @@ android {
     manifestPlaceholders["mwdat_application_id"] = "0"   // Developer Mode: the docs require "0"; an empty string fails to parse
     manifestPlaceholders["mwdat_client_token"] = "0"
 
-    // Wake word language: ./gradlew assembleDebug -Psmotri.wake=ru  (default: en)
-    // en → "hey look" with vosk-model-small-en-us; ru → "smotri" with vosk-model-small-ru.
-    // ("hey luke" is how the small English model often hears "hey look".)
+    // Wake word "Smotri" in both builds; the model depends on the speaker's accent:
+    //   ./gradlew assembleDebug                    → en: vosk-model-small-en-us (default)
+    //   ./gradlew assembleDebug -Psmotri.wake=ru   → ru: vosk-model-small-ru
+    // "smotri" is not in the English vocabulary, so the English model is matched against how it
+    // actually hears the word (measured offline, see docs/HOW-IT-WORKS.md "Wake word").
     val wake = (project.findProperty("smotri.wake") as String?) ?: "en"
-    val (wakeWords, wakeHint) = if (wake == "ru") "смотри" to "«Смотри»" else "hey look|hey luke" to "\"Hey look\""
+    val wakeWords = if (wake == "ru") "смотри"
+      else "smotri|small tree|smoke tree|smoke jerry|smoke jury|smell jerry|smoldering|smothery|symmetry|smoke ring|summary"
     buildConfigField("String", "WAKE_WORDS", "\"$wakeWords\"")
-    buildConfigField("String", "WAKE_HINT", "\"${wakeHint.replace("\"", "\\\"")}\"")
     buildConfigField("String", "WAKE_MODEL_ASSET", "\"vosk-model-$wake\"")
   }
 

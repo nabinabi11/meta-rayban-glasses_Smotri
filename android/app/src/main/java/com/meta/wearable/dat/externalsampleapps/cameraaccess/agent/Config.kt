@@ -63,10 +63,11 @@ object Config {
     const val RECONNECT_MIN_MS = 1000L
     const val RECONNECT_MAX_MS = 15000L
 
-    // Wake word, chosen at build time: -Psmotri.wake=en (default, "hey look") or ru ("smotri").
-    // Vosk can only spot words from its model's vocabulary, so the English build can't
-    // listen for "smotri" itself.
+    // Wake word "Smotri". The English build matches how the English model hears it
+    // ("small tree", "smoke tree", ...), the Russian build matches «смотри»; see build.gradle.kts.
+    // Only at the START of a phrase (optionally after "hey"/"ok"), so "give me a summary"
+    // or «посмотри» mid-sentence don't wake it.
     val WAKE_WORDS: List<String> = BuildConfig.WAKE_WORDS.split("|")
     val WAKE_MODEL_ASSET: String = BuildConfig.WAKE_MODEL_ASSET
-    val WAKE_HINT: String = BuildConfig.WAKE_HINT
+    const val WAKE_HINT = "\"Smotri\""
 }

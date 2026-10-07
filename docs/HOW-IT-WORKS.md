@@ -13,7 +13,7 @@ server in Singapore, DeepSeek brain, Alibaba speech).
 └─────────────────────────────────────────────────────────────┼──┼───────┘
                                                               ▼  ▼
 ┌─ ANDROID PHONE: Smotri app (Kotlin) ───────────────────────────────────┐
-│  wake word "Hey look" (Vosk, offline)  1.2 s pre-roll audio buffer     │
+│  wake word "Smotri" (Vosk, offline)    1.2 s pre-roll audio buffer     │
 │  VAD (end of utterance by silence)     ExoPlayer (radio / music)       │
 │  location                              Compose UI                      │
 └──────────────────────────┬─────────────────────────────────────────────┘
@@ -142,6 +142,36 @@ hallucinated streets), what's currently playing, and `prompt_extra` from the con
 server can still be dead on the phone. Search goes region → language → global, takes batches of
 8 candidates, probes each for the first byte, and remembers already-served URLs so that
 "play another one" really gives another one.
+
+## Wake word
+
+"Smotri" is spotted **offline on the phone** with a small [Vosk](https://alphacephei.com/vosk/) model
+(~40 MB), so nothing leaves the phone until you address the agent.
+
+The catch: "smotri" is not an English word. A keyword spotter can only output words from its
+model's vocabulary, so an English model never prints "smotri". And a Russian model doesn't
+recognize the word when it's said with an English accent. We measured both on synthetic speech
+(two English voices × three speaking rates, plus near-miss words and ordinary sentences):
+
+| Approach | "Smotri" detected | False wakes on other speech |
+|---|---|---|
+| Russian model, free decoding | 4 / 48 | 4 / 96 |
+| Russian model, grammar restricted to «смотри» | 48 / 48 | 68 / 96 ❌ |
+| Russian model, grammar + decoy words | 2 / 48 | 3 / 96 |
+| **English model, aliases at the start of a phrase** | **48 / 48** | **0** on ordinary speech ✅ |
+
+The English model hears an accented "Smotri" as one of a small set of phrases: *small tree,
+smoke tree, smoke jerry, smoldering, symmetry, summary...* Those become **aliases** of the wake
+word. They only count **at the start of a phrase** (optionally after "hey"/"ok"). Matching
+anywhere woke the agent on 29 of 36 sentences like "send me the summary tomorrow"; matching at the
+start woke it on 0. The remaining false wake is saying "summary" or "small tree" on its own.
+
+A Russian accent is the opposite case: the English model hears «Смотри» as *slattery* or
+*selected*, while the Russian model gets 12 / 12 with 0 false wakes on «посмотри», «смотрю»,
+«смотрит». Hence two APKs, same wake word.
+
+Synthetic voices are only a proxy. The alias list lives in `android/app/build.gradle.kts`;
+real-world misses are easy to add.
 
 ## 5. Phone client: non-obvious decisions
 

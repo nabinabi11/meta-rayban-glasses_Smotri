@@ -12,7 +12,7 @@ Based on Meta's **CameraAccess** sample from
 |---|---|
 | `agent/AgentViewModel.kt` | the brain of the client: states, wake word → capture → commit, playback, follow-up window |
 | `agent/AudioBridge.kt` | routes mic/speaker to the glasses over Bluetooth SCO |
-| `agent/WakeWord.kt` | offline wake word "Hey look" / «Смотри» (Vosk) |
+| `agent/WakeWord.kt` | offline wake word "Smotri" (Vosk), matched only at the start of a phrase |
 | `agent/Vad.kt` | end-of-utterance detection |
 | `agent/WsClient.kt` | WebSocket client, see [the protocol](../docs/PROTOCOL.md) |
 | `agent/ServerPrefs.kt` | the server address the user pasted |
@@ -30,8 +30,8 @@ echo "github_token=ghp_..." > local.properties
 curl -L -o /tmp/vosk.zip https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip
 unzip -q /tmp/vosk.zip -d app/src/main/assets && mv app/src/main/assets/vosk-model-small-en-us-0.15 app/src/main/assets/vosk-model-en
 uuidgen > app/src/main/assets/vosk-model-en/uuid
-./gradlew installDebug                      # "Hey look"
-# Russian wake word «Смотри»: vosk-model-small-ru-0.22 → assets/vosk-model-ru, then
+./gradlew installDebug
+# Russian accent: vosk-model-small-ru-0.22 → assets/vosk-model-ru, then
 # ./gradlew installDebug -Psmotri.wake=ru
 ```
 
@@ -40,6 +40,6 @@ uuidgen > app/src/main/assets/vosk-model-en/uuid
 1. Meta AI app → Settings → App info → tap the version 5 times → **Developer Mode** on.
 2. Open Smotri → paste the connection line from your server → **Save**.
 3. **Connect glasses** → confirm in Meta AI → **Start agent** → grant permissions.
-4. Say "Hey look".
+4. Say "Smotri".
 
 Debug tips are in [How it works §9](../docs/HOW-IT-WORKS.md#9-debugging).

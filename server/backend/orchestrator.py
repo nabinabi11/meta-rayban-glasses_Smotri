@@ -251,8 +251,12 @@ INAUDIBLE = "(inaudible)"
 # mic audio) so the start of the sentence isn't lost, and that window contains the wake word
 # itself: Vosk fires only AFTER it was spoken. Shrinking the buffer would bring the clipping
 # back, so the word is cut here instead. Only at the very start and only as a whole word, so
-# "look" in the middle of a sentence is untouched.
-_WAKE_PREFIX = re.compile(r"^\s*(?:hey,?\s+look|смотри(?:те)?)\b[\s,.!?:;-]*", re.I)
+# "smotri" in the middle of a sentence is untouched. Words that also occur in real requests
+# ("summary", "symmetry") are deliberately not stripped: a follow-up may start with them.
+_WAKE_PREFIX = re.compile(
+    r"^\s*(?:(?:hey|hi|ok(?:ay)?|эй)[,\s]+)?(?:smotr(?:i|ee|y)|smoke\s+tree|смотри(?:те)?)\b[\s,.!?:;-]*",
+    re.I,
+)
 
 # Fast-path anchor: "what do I see" → grab the frame before asking the brain.
 # A regex rather than exact substrings: "what do I *now* see" must match too.
