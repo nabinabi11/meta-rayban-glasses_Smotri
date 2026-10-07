@@ -21,7 +21,7 @@ import os
 import re
 from typing import AsyncIterator
 
-from backend import logs, media, qwen_tts, gemini_tts, qwen_asr, vision, web, maps, memory
+from backend import logs, media, qwen_tts, gemini_tts, qwen_asr, vision, web, maps, memory, weather
 from backend.brain import Brain, BrainConfig
 from backend.omni_client import (
     OMNI_AUDIO_SAMPLE_RATE,
@@ -68,6 +68,9 @@ BRAIN_SYSTEM = (
     "INTERNET (web_search tool):\n"
     "- Call web_search for anything fresh or precise: news, events, prices, schedules, facts, "
     "anything after your knowledge cutoff. Retell the gist briefly, never read links aloud.\n\n"
+    "WEATHER (get_weather tool):\n"
+    "- For weather questions call get_weather: with a place name, or empty for where the user "
+    "is now. Never guess the weather and never use web_search for it.\n\n"
     "MAPS AND PLACES (find_place tool):\n"
     "- You know the user's location when it's available. For \"what's nearby\", \"the nearest...\", "
     "addresses and where to go, call find_place. Name a couple of options with distance, briefly.\n\n"
@@ -146,6 +149,22 @@ FIND_PLACE_TOOL = {
     },
 }
 
+WEATHER_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": (
+            "Current weather and today's/tomorrow's forecast. Pass a place name, or an empty "
+            "string for the user's current location."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {"place": {"type": "string", "description": "city or place, e.g. \"Tokyo\"; empty = where the user is"}},
+            "required": ["place"],
+        },
+    },
+}
+
 PLAY_MEDIA_TOOL = {
     "type": "function",
     "function": {
@@ -212,22 +231,22 @@ MEMORY_TOOLS = [
     {"type": "function", "function": {
         "name": "remember",
         "description": "Remember a fact about the user (name, preferences, address, goal, anything important). Keep it short.",
-        "parameters": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]},
+        "parameters": {"type": "object", "properties": {"text": {"type": "string", "description": "the fact to save, as a short sentence, e.g. \"The user's name is Nick.\""}}, "required": ["text"]},
     }},
     {"type": "function", "function": {
         "name": "read_file",
         "description": "Read a memory file by its path from the file map (e.g. english/progress.md).",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}}, "required": ["path"]},
+        "parameters": {"type": "object", "properties": {"path": {"type": "string", "description": "file path from the memory map, e.g. language/progress.md"}}, "required": ["path"]},
     }},
     {"type": "function", "function": {
         "name": "write_file",
         "description": "Create or overwrite a memory file (path + full content). For topics, skills, progress.",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "content": {"type": "string"}}, "required": ["path", "content"]},
+        "parameters": {"type": "object", "properties": {"path": {"type": "string", "description": "file path, e.g. language/progress.md"}, "content": {"type": "string", "description": "the full new content of the file (markdown)"}}, "required": ["path", "content"]},
     }},
     {"type": "function", "function": {
         "name": "append_file",
         "description": "Append a line to a memory file (log, notes, progress).",
-        "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "text": {"type": "string"}}, "required": ["path", "text"]},
+        "parameters": {"type": "object", "properties": {"path": {"type": "string", "description": "file path, e.g. language/vocab.md"}, "text": {"type": "string", "description": "the line to append"}}, "required": ["path", "text"]},
     }},
 ]
 
@@ -456,7 +475,11 @@ class Orchestrator:
                 from datetime import datetime
                 from zoneinfo import ZoneInfo
                 _tz = os.getenv("AGENT_TIMEZONE", "UTC")
-                _now = datetime.now(ZoneInfo(_tz))
+                try:
+                    _now = datetime.now(ZoneInfo(_tz))
+                except Exception:  # noqa: BLE001 — no tzdata / bad name: UTC beats no time at all
+                    from datetime import timezone
+                    _tz, _now = "UTC", datetime.now(timezone.utc)
                 system_prompt += (
                     f"\n\n# Now\n{_now.strftime('%A, %d %B %Y, %H:%M')} ({_tz}). "
                     "Take the time of day and weekday into account (what's open, morning/evening)."
@@ -554,6 +577,8 @@ class Orchestrator:
                     return desc
                 if name == "web_search":
                     return await web.search_text(args.get("query") or "")
+                if name == "get_weather":
+                    return await weather.get_weather(args.get("place") or "", self.location)
                 if name == "find_place":
                     # addr is the address already known from the geocoder: without a Places
                     # key, the fallback searches the web for businesses near that address
@@ -621,7 +646,7 @@ class Orchestrator:
             tts_in_q: asyncio.Queue = asyncio.Queue()
             sentinel = object()
 
-            _tools = [WEB_TOOL, FIND_PLACE_TOOL, PLAY_MEDIA_TOOL, PLAY_TRACK_TOOL,
+            _tools = [WEB_TOOL, WEATHER_TOOL, FIND_PLACE_TOOL, PLAY_MEDIA_TOOL, PLAY_TRACK_TOOL,
                       STOP_MEDIA_TOOL, CONTROL_MEDIA_TOOL, *MEMORY_TOOLS]
             # no look if the frame is already attached (the model would call it again and
             # ignore the picture) or if the caption is already in the prompt (describe mode)

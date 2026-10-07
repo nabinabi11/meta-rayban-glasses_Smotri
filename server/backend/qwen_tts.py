@@ -149,10 +149,13 @@ async def stream_session(
         },
     }
 
+    # close_timeout: DashScope never answers the close frame, and the default 10 s close
+    # handshake held "done" back by 10 s after the last audio chunk (the follow-up window
+    # and music resume waited for it). By then all audio is received, so don't wait.
     async with websockets.connect(
         url,
         additional_headers={"Authorization": f"bearer {c['key']}"},
-        max_size=None, ping_interval=20, ping_timeout=20,
+        max_size=None, ping_interval=20, ping_timeout=20, close_timeout=0.2,
     ) as ws:
         await ws.send(json.dumps(session_update))
 
@@ -179,7 +182,10 @@ async def stream_session(
                     b64 = data.get("delta") or data.get("audio") or ""
                     if b64:
                         yield base64.b64decode(b64)
-                elif etype in ("response.done", "session.finished"):
+                elif etype == "session.finished":
+                    # NOT response.done: with server_commit a long answer can be split into
+                    # several responses, and stopping at the first one cut the rest off.
+                    # session.finished comes once everything sent before session.finish is spoken.
                     break
                 elif etype == "error" or etype.endswith(".failed"):
                     err = data.get("error") or data

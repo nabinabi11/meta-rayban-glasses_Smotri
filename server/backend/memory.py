@@ -96,6 +96,10 @@ def append_file(path: str, text: str) -> str:
 
 def remember(text: str) -> str:
     """Quickly add a fact about the user to the profile."""
+    if not (text or "").strip():
+        # some models call remember with empty arguments; make them retry instead of
+        # writing a blank "-" line into the profile
+        return "ERROR: nothing to remember. Call remember again with the fact in the 'text' argument."
     return append_file("profile.md", "- " + text.strip())
 
 

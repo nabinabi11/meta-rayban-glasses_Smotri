@@ -57,7 +57,10 @@ data class AgentUiState(
 private fun toolLabel(name: String): String = when (name) {
     "look" -> "👁 looking"
     "web_search" -> "🌐 searching the web"
+    "get_weather" -> "🌤 checking the weather"
     "find_place" -> "🗺 searching the map"
+    "play_media", "play_track" -> "🎵 starting music"
+    "stop_media", "control_media" -> "⏯ player"
     "remember" -> "💾 remembering"
     "read_file" -> "📂 reading notes"
     "write_file", "append_file" -> "✍️ writing notes"

@@ -123,7 +123,8 @@ server. `look` needs the phone.
 |---|---|---|
 | `look` | grab a frame from the glasses | server sends `{"type":"capture"}`, the phone raises the camera and returns a JPEG |
 | `web_search` | internet search | DuckDuckGo HTML, own parser, no key |
-| `find_place` | places nearby | Yandex Places if keyed → **fallback: web search near the known address** |
+| `get_weather` | weather now, today, tomorrow | [Open-Meteo](https://open-meteo.com), no key. A dedicated tool, because search results carry page titles, not numbers, and models then refuse or invent them |
+| `find_place` | places nearby | Yandex Places if keyed → **fallback: web search near the known address** (address from OpenStreetMap Nominatim, free) |
 | `play_media` | radio by genre/country | radio-browser.info, regional first, each stream checked for liveness |
 | `play_track` | a specific song | Yandex Music (your token) → Audius |
 | `control_media` / `stop_media` | pause / resume / seek / stop | `{"type":"media"}` event to the phone |

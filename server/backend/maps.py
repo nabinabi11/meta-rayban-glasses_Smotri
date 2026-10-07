@@ -1,8 +1,9 @@
-"""maps.py: Yandex Maps for the agent: nearby places + address from coordinates.
+"""maps.py: nearby places + address from coordinates for the agent.
 
-Optional. One key (YANDEX_API_KEY): businesses via Places (search-maps), address via
-Geocoder. Yandex enables APIs per key; a missing one returns 403. Without Places, the
-agent falls back to a web search near the user's known address (_find_place_web).
+Works without any key: the address comes from OpenStreetMap Nominatim (free) and places
+from a web search near that address (_find_place_web). Optional Yandex key
+(YANDEX_API_KEY) adds real business search via Places (search-maps) and its Geocoder;
+Yandex enables APIs per key, and a missing one returns 403.
 MAPS_LANG sets the response language (default en_US; ru_RU, tr_TR, uk_UA...).
 
 Env: YANDEX_API_KEY
@@ -100,7 +101,7 @@ async def reverse_geocode(lat: float, lon: float) -> str | None:
     to YANDEX_API_KEY (which may lack geocoder access → 403)."""
     key = os.getenv("YANDEX_GEOCODER_KEY") or os.getenv("YANDEX_API_KEY")
     if not key:
-        return None
+        return await _reverse_osm(lat, lon)
     # kind=house → the nearest BUILDING (street + number), not the district/city
     params = {"apikey": key, "geocode": f"{lon},{lat}", "format": "json",
               "lang": _LANG, "results": 1, "kind": "house"}
@@ -118,6 +119,38 @@ async def reverse_geocode(lat: float, lon: float) -> str | None:
         return meta.get("text") or geo.get("name")
     except Exception:  # noqa: BLE001
         return None
+
+NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
+_osm_cache: dict[tuple[float, float], str | None] = {}
+
+
+async def _reverse_osm(lat: float, lon: float) -> str | None:
+    """Free reverse geocoding via OpenStreetMap Nominatim (no key), used without Yandex.
+
+    Nominatim's policy: a real User-Agent and at most ~1 request/s. The phone sends location
+    updates often, so results are cached per ~100 m cell (3 decimal places)."""
+    cell = (round(lat, 3), round(lon, 3))
+    if cell in _osm_cache:
+        return _osm_cache[cell]
+    lang = _LANG.split("_")[0]
+    try:
+        async with httpx.AsyncClient(timeout=10.0, headers={
+            "User-Agent": "smotri-glasses-agent/0.1 (+https://github.com/nabinabi11/meta-rayban-glasses_Smotri)",
+        }) as c:
+            r = await c.get(NOMINATIM_URL, params={"lat": lat, "lon": lon, "format": "jsonv2",
+                                                   "zoom": 18, "accept-language": lang})
+        if r.status_code != 200:
+            return None
+        a = r.json().get("address") or {}
+        street = " ".join(x for x in (a.get("house_number"), a.get("road")) if x)
+        area = a.get("suburb") or a.get("neighbourhood") or a.get("quarter")
+        city = a.get("city") or a.get("town") or a.get("village") or a.get("state")
+        addr = ", ".join(x for x in (street, area, city, a.get("country")) if x) or None
+        _osm_cache[cell] = addr
+        return addr
+    except Exception:  # noqa: BLE001
+        return None
+
 
 async def _find_place_web(query: str, location, addr: str | None, count: int) -> str:
     """Fallback without Yandex Places: search the web for businesses near the KNOWN address.

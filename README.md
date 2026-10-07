@@ -24,7 +24,7 @@ camera ────────DAT SDK────►  VAD · pre-roll buffer ·
 - 🗣 **Hands-free conversation**: wake word, then you talk. Follow-up questions don't need the wake word. You can interrupt it.
 - 🌍 **Answers in your language**: speech recognition auto-detects the language and the agent replies in it.
 - 👁 **Sees on demand**: the brain decides when to `look`. The camera turns on only for that one frame (the privacy LED is on only then).
-- 🌐 **Web search**: news, facts, prices (DuckDuckGo, no key needed).
+- 🌐 **Web search and weather**: news, facts, prices, forecasts (DuckDuckGo and Open-Meteo, no keys needed).
 - 📍 **Knows where you are**: "what pharmacies are nearby", "where am I".
 - 🧠 **Remembers you**: file-based memory (profile + notes) that the agent reads and writes itself.
 - 🎵 **Plays radio and music** through the glasses, with pause, seek and stop by voice.
