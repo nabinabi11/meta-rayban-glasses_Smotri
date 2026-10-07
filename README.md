@@ -46,8 +46,8 @@ You need: **Ray-Ban Meta** glasses, an **Android** phone (tested on Pixel 8 Pro)
 ### 1. Server: one command
 
 ```bash
-git clone https://github.com/nabinabi11/smotri-rayban.git
-cd smotri-rayban/server
+git clone https://github.com/nabinabi11/meta-rayban-glasses_Smotri.git
+cd meta-rayban-glasses_Smotri/server
 ./setup.sh          # installs Docker if needed, asks for your key, starts everything
 ```
 
