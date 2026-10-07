@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/header.jpg" alt="Smotri: an open-source voice AI agent for Ray-Ban Meta smart glasses" width="100%">
+</p>
+
 # Smotri — an open-source voice AI agent for Ray-Ban Meta glasses
 
 *Say "Smotri" (Russian for "look!", pronounced SMOH-tree), ask anything. The agent answers in your ear, in your language, and sees through the glasses' camera when it needs to.*
