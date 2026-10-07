@@ -1,0 +1,22 @@
+name: server-check
+on:
+  push:
+    paths: ["server/**"]
+  pull_request:
+    paths: ["server/**"]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Import smoke test
+        run: python -c "import backend.server as s; assert s.ACCESS_TOKEN"
+      - name: Docker image builds
+        run: docker build -t smotri .

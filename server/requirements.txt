@@ -1,0 +1,9 @@
+# Minimal dependencies.
+httpx>=0.27
+fastapi>=0.115
+uvicorn[standard]>=0.32
+imageio-ffmpeg>=0.5     # bundled ffmpeg (WAV/mp4 muxing, tempo)
+websockets>=12          # streaming TTS (DashScope realtime WS, PCM chunks)
+pyyaml>=6               # hot-reload of config.yaml (runtime switches without restart)
+yandex-music>=2.1       # optional play_track source (unofficial SDK, your own token)
+tzdata                  # zoneinfo in slim Docker images

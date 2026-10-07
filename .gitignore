@@ -1,0 +1,24 @@
+# secrets
+.env
+*.env
+!.env.example
+local.properties
+*.pem
+*.key
+*token*.txt
+
+# runtime data (access token, agent memory)
+server/data/
+smotri-memory/
+
+# build / env
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+*.apk
+android/app/src/main/assets/vosk-model-*/
+
+# server logs
+server/logs/

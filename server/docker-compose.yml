@@ -1,0 +1,10 @@
+services:
+  smotri:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data            # access token + agent memory survive rebuilds
+      - ./config.yaml:/app/config.yaml:ro   # edit switches without rebuilding
+    restart: unless-stopped

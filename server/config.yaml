@@ -1,0 +1,13 @@
+# Runtime switches — NO secrets here (keys live in .env).
+# Priority: config.yaml > .env > built-in default. Re-read on the fly (no restart).
+# Everything is commented out so your .env decides. Uncomment to override.
+
+# stt_engine: qwen         # qwen — qwen3-asr-flash (Alibaba DashScope)
+# tts_engine: qwen         # qwen — qwen3-tts-flash | google — Gemini TTS (needs GEMINI_API_KEY)
+# vision_mode: describe    # describe — a vision model describes the frame, the brain answers
+#                          # direct   — the frame goes straight to BRAIN_VISION_MODEL, which answers itself
+# voice: Ethan             # qwen3-tts voice: Ethan / Kai / Arthur / Vincent / Neil / Moon / Cherry / Serena ...
+
+# Extra system-prompt text: tune the agent to yourself (name, city, habits). Multiline OK.
+# prompt_extra: |
+#   The user's name is Alex. Keep answers short.

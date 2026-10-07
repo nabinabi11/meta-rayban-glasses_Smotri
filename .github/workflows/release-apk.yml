@@ -1,0 +1,73 @@
+name: release-apk
+
+# Builds the Android app and attaches the APK to a GitHub Release.
+# Trigger: push a tag like v0.1.0 (or run manually from the Actions tab).
+#
+# Needs one repo secret: MWDAT_TOKEN — a GitHub PAT (classic) with read:packages.
+# Gradle uses it to pull Meta's DAT SDK from GitHub Packages.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Android SDK packages
+        run: |
+          SDKMGR=$(find "$ANDROID_SDK_ROOT" -path '*cmdline-tools*' -name sdkmanager | head -1)
+          yes | "$SDKMGR" --licenses >/dev/null 2>&1 || true
+          "$SDKMGR" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: local.properties
+        run: |
+          echo "github_token=${{ secrets.MWDAT_TOKEN }}" > local.properties
+          echo "sdk.dir=$ANDROID_SDK_ROOT" >> local.properties
+
+      - name: Build APKs (English and Russian wake word, each with only its Vosk model)
+        run: |
+          chmod +x gradlew
+          mkdir -p app/src/main/assets
+          model() {  # $1 = Vosk small model name, $2 = asset dir; leaves only this model in assets
+            rm -rf app/src/main/assets/vosk-model-*
+            curl -fsSL -o /tmp/m.zip "https://alphacephei.com/vosk/models/$1.zip"
+            rm -rf /tmp/m && unzip -q /tmp/m.zip -d /tmp/m && mv "/tmp/m/$1" "app/src/main/assets/$2"
+            cat /proc/sys/kernel/random/uuid > "app/src/main/assets/$2/uuid"   # Vosk StorageService needs it
+          }
+          model vosk-model-small-en-us-0.15 vosk-model-en
+          ./gradlew assembleDebug -Psmotri.wake=en --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk ../smotri.apk
+          model vosk-model-small-ru-0.22 vosk-model-ru
+          ./gradlew assembleDebug -Psmotri.wake=ru --stacktrace
+          cp app/build/outputs/apk/debug/app-debug.apk ../smotri-ru.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smotri-apk
+          path: |
+            smotri.apk
+            smotri-ru.apk
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            smotri.apk
+            smotri-ru.apk
+          generate_release_notes: true
